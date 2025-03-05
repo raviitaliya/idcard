@@ -67,8 +67,8 @@ const App = () => {
       <div className='w-[1011px] h-[637.5px] mt-7 relative'>
         <img src="../public/images/Group 39.svg" alt="" className='absolute opacity-30' />
         <div>
-          <div className='w-[884.3px] h-[92px] absolute  top-[60px] left-1/2 transform -translate-x-1/2'>
-            <div className=' w-full h-full  font-bold text-[24px]' >
+          <div className='w-[851.3px] h-[102px] absolute font-sans  top-[60px] left-1/2 transform -translate-x-1/2'>
+            <div className=' w-full h-full  font-semibold text-[24px] leading-[32.68px] ' >
               "Zeeshan Tahashidar, employed by Quality Base Inspection Company, has successfully completed the Operator Training Course and is now certified to work as a Crane Operator."
             </div>
           </div>
