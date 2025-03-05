@@ -13,6 +13,8 @@ const App = () => {
         Print Page
       </button>
 
+      <img src="/src/favicon.svg" alt="" className="" />
+
       <div className='w-[1011px] h-[637.5px] relative'>
         <img src="../public/images/Group 39.svg" alt="" className='absolute opacity-30' />
         <div>
