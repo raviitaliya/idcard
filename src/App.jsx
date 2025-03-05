@@ -17,16 +17,16 @@ const App = () => {
         <img src="../public/images/Group 39.svg" alt="" className='absolute opacity-30' />
         <div>
           <div className='w-[884.3px] h-[92px] absolute  top-[33px] left-1/2 transform -translate-x-1/2'>
-            <img src="../public/images/Group 40.svg" alt="" className=' absolute ' />
+            <img src="../public/images/Group 40.svg" alt="" className=' absolute  z-50' />
           </div>
           <div>
             <img src="../public/images/Group (3).svg" alt="" className='absolute top-[197px] left-[392px]' />
           </div>
           <div>
-            <img src="../public/images/Rectangle.svg" alt="" className='absolute top-[225px] left-[66px]' />
+            <img src="../public/images/Rectangle.svg" alt="" className='absolute top-[225px] left-[66px] z-10' />
             <img src="../public/images/mem_dots_arrow.svg" alt="" className='absolute top-[375px] left-[22px]' />
             <div className='absolute top-[167px] left-[245px] text-[24px] font-sans'>
-              <div className='flex gap-4'>
+              <div className='flex gap-4 z-10'>
                 <div className='font-bold flex flex-col gap-4 '>
                   <p>NAME</p>
                   <p>IQAMA/PASSPORT</p>
@@ -49,7 +49,7 @@ const App = () => {
                 </div>
               </div>
             </div>
-            <img src="../public/images/Group (2).svg" alt="" className='absolute top-[245px] left-[777.5px]' />
+            <img src="../public/images/Group (2).svg" alt="" className='absolute top-[245px] left-[777.5px] z-20' />
           </div>
 
 
@@ -58,7 +58,7 @@ const App = () => {
           </div>
 
         </div>
-        <img src="../public/images/Group 38.svg" alt="" className='absolute right-0 opacity-30' />
+        <img src="../public/images/Group 38.svg" alt="" className='absolute right-0 opacity-30 z-0' />
       </div>
 
 
