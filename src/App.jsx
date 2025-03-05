@@ -23,7 +23,7 @@ const App = () => {
             <img src="../public/images/Group (3).svg" alt="" className='absolute top-[197px] left-[392px]' />
           </div>
           <div>
-            <img src="../public/images/Rectangle.scg" alt="" className='absolute top-[225px] left-[66px]' />
+            <img src="../public/images/Rectangle.svg" alt="" className='absolute top-[225px] left-[66px]' />
             <img src="../public/images/mem_dots_arrow.svg" alt="" className='absolute top-[375px] left-[22px]' />
             <div className='absolute top-[167px] left-[245px] text-[24px] font-sans'>
               <div className='flex gap-4'>
