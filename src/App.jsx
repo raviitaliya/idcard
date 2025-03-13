@@ -4,6 +4,8 @@ import jsPDF from 'jspdf';
 
 const App = () => {
   const [imagesLoaded, setImagesLoaded] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
 
   useEffect(() => {
     const images = document.images;
@@ -31,57 +33,196 @@ const App = () => {
     }
   }, []);
 
-  const handlePrint = async () => {
+  const handlePrint = async (action) => {
     if (!imagesLoaded) {
       alert('Images are still loading. Please try again in a moment.');
       return;
     }
 
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const pdfWidth = 190;   
-    const pdfHeight = 120;
-
-    const card1 = document.getElementById('card1');
-    if (card1) {
-      const canvas1 = await html2canvas(card1, {
-        scale: 1,
-        useCORS: true,
-        backgroundColor: '#FFFFFF',
-      });
-      const imgData1 = canvas1.toDataURL('image/png');
-      pdf.addImage(imgData1, 'PNG', 10, 10, pdfWidth, pdfHeight);
+    if (action === 'download') {
+      setIsDownloading(true);
+    } else {
+      setIsPrinting(true);
     }
 
-    const card2 = document.getElementById('card2');
-    if (card2) {
-      const canvas2 = await html2canvas(card2, {
-        scale: 1,
-        useCORS: true,
-        backgroundColor: '#FFFFFF', 
-      });
-      const imgData2 = canvas2.toDataURL('image/png');
-      pdf.addPage();
-      pdf.addImage(imgData2, 'PNG', 10, 10, pdfWidth, pdfHeight);
-    }
+    try {
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = 190;
+      const pdfHeight = 120;
 
-    pdf.save('document.pdf');
+      const card1 = document.getElementById('card1');
+      const card2 = document.getElementById('card2');
+
+      let imgData1, imgData2;
+
+      if (card1) {
+        const canvas1 = await html2canvas(card1, {
+          scale: 1,
+          useCORS: true,
+          backgroundColor: '#FFFFFF',
+        });
+        imgData1 = canvas1.toDataURL('image/png');
+        pdf.addImage(imgData1, 'PNG', 10, 10, pdfWidth, pdfHeight);
+      }
+
+      if (card2) {
+        const canvas2 = await html2canvas(card2, {
+          scale: 1,
+          useCORS: true,
+          backgroundColor: '#FFFFFF',
+        });
+        imgData2 = canvas2.toDataURL('image/png');
+        pdf.addPage();
+        pdf.addImage(imgData2, 'PNG', 10, 10, pdfWidth, pdfHeight);
+      }
+
+      if (action === 'download') {
+        pdf.save('document.pdf');
+      } else if (action === 'print') {
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Print</title>
+              <style>
+                body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+                img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+                .page-break { page-break-before: always; }
+                .loading {
+                  position: fixed;
+                  top: 50%;
+                  left: 50%;
+                  transform: translate(-50%, -50%);
+                  text-align: center;
+                  font-size: 24px;
+                }
+                .loading-spinner {
+                  display: inline-block;
+                  width: 50px;
+                  height: 50px;
+                  border: 5px solid #f3f3f3;
+                  border-top: 5px solid #3498db;
+                  border-radius: 50%;
+                  animation: spin 1s linear infinite;
+                  margin-bottom: 20px;
+                }
+                @keyframes spin {
+                  0% { transform: rotate(0deg); }
+                  100% { transform: rotate(360deg); }
+                }
+                @media print {
+                  * {
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
+                  }
+                  .loading { display: none; }
+                }
+              </style>
+            </head>
+            <body>
+              <div class="loading">
+                <div class="loading-spinner"></div>
+                <p>Preparing document for print...</p>
+              </div>
+        `);
+        
+        // Add images with onload handlers
+        if (imgData1) {
+          printWindow.document.write(`
+            <img src="${imgData1}" alt="Page 1" style="display: none" onload="this.style.display='block'">
+          `);
+        }
+        if (imgData2) {
+          printWindow.document.write(`
+            <img src="${imgData2}" alt="Page 2" class="page-break" style="display: none" onload="this.style.display='block'">
+          `);
+        }
+        
+        printWindow.document.write(`
+            <script>
+              // Check if all images are loaded
+              window.addEventListener('load', function() {
+                const images = document.getElementsByTagName('img');
+                let loadedImages = 0;
+                
+                function checkAllImagesLoaded() {
+                  loadedImages++;
+                  if (loadedImages === images.length) {
+                    document.querySelector('.loading').style.display = 'none';
+                    window.print();
+                  }
+                }
+
+                for(let img of images) {
+                  if(img.complete) {
+                    checkAllImagesLoaded();
+                  } else {
+                    img.addEventListener('load', checkAllImagesLoaded);
+                    img.addEventListener('error', checkAllImagesLoaded);
+                  }
+                }
+              });
+            </script>
+            </body>
+          </html>
+        `);
+        
+        printWindow.document.close();
+        printWindow.focus();
+      }
+    } catch (error) {
+      console.error('Error during print/download:', error);
+      alert('An error occurred. Please try again.');
+    } finally {
+      if (action === 'download') {
+        setIsDownloading(false);
+      } else {
+        setIsPrinting(false);
+      }
+    }
+  };
+
+  const getButtonText = (type) => {
+    if (!imagesLoaded) return 'Loading Images...';
+    if (type === 'download') {
+      return isDownloading ? 'Generating PDF...' : 'Download PDF';
+    }
+    return isPrinting ? 'Preparing Print...' : 'Print Page';
   };
 
   return (
     <div>
+      <style>
+        {`
+          @media print {
+            * {
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+          }
+        `}
+      </style>
       <button
-        onClick={handlePrint}
+        onClick={() => handlePrint('download')}
         className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 print:hidden print-button"
-        disabled={!imagesLoaded}
+        disabled={!imagesLoaded || isDownloading || isPrinting}
       >
-        {imagesLoaded ? 'Print Page' : 'Loading Images...'}
+        {getButtonText('download')}
+      </button>
+
+      <button
+        onClick={() => handlePrint('print')}
+        className="mb-4 ml-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 print:hidden"
+        disabled={!imagesLoaded || isDownloading || isPrinting}
+      >
+        {getButtonText('print')}
       </button>
 
       <img src="/favicon.svg" alt="" className="" />
 
       <div
         id="card1"
-        className="!w-[1011px] !h-[637.5px] relative bg-[url('/img1.svg')]"
+        className="!w-[1009px] !h-[635px] relative bg-[url('/IDf-05.svg')]"
       >
         <div>
           <div>
@@ -132,10 +273,10 @@ const App = () => {
 
       <div
         id="card2"
-        className="w-[1011px] h-[637.5px] mt-[20px] relative bg-[url('/img2.svg')]"
+        className="!w-[1009px] !h-[635px] mt-[20px] relative bg-[url('/img2.svg')] mb-10"
       >
         <div>
-          <div className="w-[851.3px] h-[102px] absolute font-sans top-[60px] left-1/2 transform -translate-x-1/2">
+          <div className="w-[851.3px] h-[102px] absolute font-sans top-[66px] left-1/2 transform -translate-x-1/2">
             <div className="w-full h-full font-semibold text-justify text-[26px] leading-[32.68px]">
               "Zeeshan Tahashidar, employed by Quality Base Inspection Company, has successfully completed the Operator Training Course and is now certified to work as a Crane Operator."
             </div>
@@ -150,17 +291,17 @@ const App = () => {
               alt=""
               className="absolute top-[299px] left-[152px] w-auto h-auto"
             />
-            <div className="absolute top-[206px] left-[567px] text-[31px] font-bold font-sans">
+            <div className="absolute top-[206px] left-[563px] text-[31px] font-bold font-sans">
               AUTHORIZED COMPANY
             </div>
-            <div className="absolute top-[287px] left-[499px] gap-5 flex">
-              <div className="flex gap-10 pt-2 flex-col text-[25px] font-semibold">
+            <div className="absolute top-[280px] left-[499px] gap-5 flex">
+              <div className="flex gap-8 pt-2 flex-col text-[25px] font-semibold">
                 <img src="/Phone.svg" alt="" className="w-auto h-auto" />
                 <img src="/Mail.svg" alt="" className="w-auto h-auto" />
                 <img src="/Web.svg" alt="" className="w-auto h-auto" />
                 <img src="/Map pin.svg" alt="" className="w-auto h-auto" />
               </div>
-              <div className="flex gap-8 flex-col text-[25px] font-semibold">
+              <div className="flex gap-5 flex-col text-[25px] font-semibold">
                 <p>+966 13363 6833</p>
                 <p>info@qbic.com.sa</p>
                 <p>www.qbic.com.sa</p>
