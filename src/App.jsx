@@ -7,6 +7,7 @@ const App = () => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
 
+  // Check if all images are loaded
   useEffect(() => {
     const images = document.images;
     let loadedCount = 0;
@@ -14,24 +15,104 @@ const App = () => {
 
     const onImageLoad = () => {
       loadedCount += 1;
-      if (loadedCount === totalImages) {
-        setImagesLoaded(true);
-      }
+      if (loadedCount === totalImages) setImagesLoaded(true);
     };
 
     if (totalImages === 0) {
       setImagesLoaded(true);
     } else {
-      for (let i = 0; i < totalImages; i++) {
-        if (images[i].complete) {
-          onImageLoad();
-        } else {
-          images[i].addEventListener('load', onImageLoad);
-          images[i].addEventListener('error', onImageLoad);
+      Array.from(images).forEach(img => {
+        if (img.complete) onImageLoad();
+        else {
+          img.addEventListener('load', onImageLoad);
+          img.addEventListener('error', onImageLoad);
         }
-      }
+      });
     }
   }, []);
+
+  // Generate canvas from element
+  const generateCanvas = async (element) => {
+    const canvas = await html2canvas(element, {
+      scale: 1,
+      useCORS: true,
+      backgroundColor: '#FFFFFF',
+    });
+    return canvas.toDataURL('image/png');
+  };
+
+  // Handle print window creation
+  const createPrintWindow = (imgData1, imgData2) => {
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Print</title>
+          <style>
+            body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+            img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+            .page-break { page-break-before: always; }
+            .loading {
+              position: fixed;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              text-align: center;
+              font-size: 24px;
+            }
+            .loading-spinner {
+              display: inline-block;
+              width: 50px;
+              height: 50px;
+              border: 5px solid #f3f3f3;
+              border-top: 5px solid #3498db;
+              border-radius: 50%;
+              animation: spin 1s linear infinite;
+            }
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+            @media print {
+              * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+              .loading { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="loading">
+            <div class="loading-spinner"></div>
+            <p>Preparing document for print...</p>
+          </div>
+          ${imgData1 ? `<img src="${imgData1}" alt="Page 1" style="display: none" onload="this.style.display='block'">` : ''}
+          ${imgData2 ? `<img src="${imgData2}" alt="Page 2" class="page-break" style="display: none" onload="this.style.display='block'">` : ''}
+          <script>
+            window.addEventListener('load', function() {
+              const images = document.getElementsByTagName('img');
+              let loadedImages = 0;
+              const checkAllImagesLoaded = () => {
+                loadedImages++;
+                if (loadedImages === images.length) {
+                  document.querySelector('.loading').style.display = 'none';
+                  window.print();
+                }
+              };
+              Array.from(images).forEach(img => {
+                if(img.complete) checkAllImagesLoaded();
+                else {
+                  img.addEventListener('load', checkAllImagesLoaded);
+                  img.addEventListener('error', checkAllImagesLoaded);
+                }
+              });
+            });
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    return printWindow;
+  };
 
   const handlePrint = async (action) => {
     if (!imagesLoaded) {
@@ -47,31 +128,18 @@ const App = () => {
 
     try {
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = 190;
-      const pdfHeight = 120;
+      const [pdfWidth, pdfHeight] = [190, 120];
 
       const card1 = document.getElementById('card1');
       const card2 = document.getElementById('card2');
 
-      let imgData1, imgData2;
-
-      if (card1) {
-        const canvas1 = await html2canvas(card1, {
-          scale: 1,
-          useCORS: true,
-          backgroundColor: '#FFFFFF',
-        });
-        imgData1 = canvas1.toDataURL('image/png');
+      const imgData1 = card1 ? await generateCanvas(card1) : null;
+      if (imgData1) {
         pdf.addImage(imgData1, 'PNG', 10, 10, pdfWidth, pdfHeight);
       }
 
-      if (card2) {
-        const canvas2 = await html2canvas(card2, {
-          scale: 1,
-          useCORS: true,
-          backgroundColor: '#FFFFFF',
-        });
-        imgData2 = canvas2.toDataURL('image/png');
+      const imgData2 = card2 ? await generateCanvas(card2) : null;
+      if (imgData2) {
         pdf.addPage();
         pdf.addImage(imgData2, 'PNG', 10, 10, pdfWidth, pdfHeight);
       }
@@ -79,114 +147,20 @@ const App = () => {
       if (action === 'download') {
         pdf.save('document.pdf');
       } else if (action === 'print') {
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(`
-          <html>
-            <head>
-              <title>Print</title>
-              <style>
-                body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
-                img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
-                .page-break { page-break-before: always; }
-                .loading {
-                  position: fixed;
-                  top: 50%;
-                  left: 50%;
-                  transform: translate(-50%, -50%);
-                  text-align: center;
-                  font-size: 24px;
-                }
-                .loading-spinner {
-                  display: inline-block;
-                  width: 50px;
-                  height: 50px;
-                  border: 5px solid #f3f3f3;
-                  border-top: 5px solid #3498db;
-                  border-radius: 50%;
-                  animation: spin 1s linear infinite;
-                  margin-bottom: 20px;
-                }
-                @keyframes spin {
-                  0% { transform: rotate(0deg); }
-                  100% { transform: rotate(360deg); }
-                }
-                @media print {
-                  * {
-                    -webkit-print-color-adjust: exact;
-                    print-color-adjust: exact;
-                  }
-                  .loading { display: none; }
-                }
-              </style>
-            </head>
-            <body>
-              <div class="loading">
-                <div class="loading-spinner"></div>
-                <p>Preparing document for print...</p>
-              </div>
-        `);
-        
-        // Add images with onload handlers
-        if (imgData1) {
-          printWindow.document.write(`
-            <img src="${imgData1}" alt="Page 1" style="display: none" onload="this.style.display='block'">
-          `);
-        }
-        if (imgData2) {
-          printWindow.document.write(`
-            <img src="${imgData2}" alt="Page 2" class="page-break" style="display: none" onload="this.style.display='block'">
-          `);
-        }
-        
-        printWindow.document.write(`
-            <script>
-              // Check if all images are loaded
-              window.addEventListener('load', function() {
-                const images = document.getElementsByTagName('img');
-                let loadedImages = 0;
-                
-                function checkAllImagesLoaded() {
-                  loadedImages++;
-                  if (loadedImages === images.length) {
-                    document.querySelector('.loading').style.display = 'none';
-                    window.print();
-                  }
-                }
-
-                for(let img of images) {
-                  if(img.complete) {
-                    checkAllImagesLoaded();
-                  } else {
-                    img.addEventListener('load', checkAllImagesLoaded);
-                    img.addEventListener('error', checkAllImagesLoaded);
-                  }
-                }
-              });
-            </script>
-            </body>
-          </html>
-        `);
-        
-        printWindow.document.close();
-        printWindow.focus();
+        createPrintWindow(imgData1, imgData2);
       }
     } catch (error) {
       console.error('Error during print/download:', error);
       alert('An error occurred. Please try again.');
     } finally {
-      if (action === 'download') {
-        setIsDownloading(false);
-      } else {
-        setIsPrinting(false);
-      }
+      if (action === 'download') setIsDownloading(false);
+      else setIsPrinting(false);
     }
   };
 
   const getButtonText = (type) => {
     if (!imagesLoaded) return 'Loading Images...';
-    if (type === 'download') {
-      return isDownloading ? 'Generating PDF...' : 'Download PDF';
-    }
+    if (type === 'download') return isDownloading ? 'Generating PDF...' : 'Download PDF';
     return isPrinting ? 'Preparing Print...' : 'Print Page';
   };
 
