@@ -49,7 +49,7 @@ const App = () => {
         <head>
           <title>Print</title>
           <style>
-            body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+            body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
             img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
             .page-break { page-break-before: always; }
             .loading {
@@ -250,24 +250,24 @@ const App = () => {
         className="!w-[1009px] !h-[635px] mt-[20px] relative bg-[url('/img2.svg')] mb-10"
       >
         <div>
-          <div className="w-[851.3px] h-[102px] absolute font-sans top-[66px] left-1/2 transform -translate-x-1/2">
+          <div className="w-[851px] h-[102px] absolute font-sans top-[66px] left-1/2 transform -translate-x-1/2">
             <div className="w-full h-full font-semibold text-justify text-[26px] leading-[32.68px]">
               "Zeeshan Tahashidar, employed by Quality Base Inspection Company, has successfully completed the Operator Training Course and is now certified to work as a Crane Operator."
             </div>
           </div>
 
           <div>
-            <div className="absolute top-[206px] left-[75px] text-[31px] font-bold font-sans">
+            <div className={`absolute ${isPrinting || isDownloading ? 'top-[207px]' : 'top-[218px]'} left-[75px] flex gap-28 text-[31px] font-bold font-sans`}>
               AUTHORIZED SIGNATORY
+              <div>
+                AUTHORIZED COMPANY
+              </div>
             </div>
             <img
               src="/Vector (1).svg"
               alt=""
               className="absolute top-[299px] left-[152px] w-auto h-auto"
             />
-            <div className="absolute top-[206px] left-[563px] text-[31px] font-bold font-sans">
-              AUTHORIZED COMPANY
-            </div>
             <div className="absolute top-[280px] left-[499px] gap-5 flex">
               <div className="flex gap-8 pt-2 flex-col text-[25px] font-semibold">
                 <img src="/Phone.svg" alt="" className="w-auto h-auto" />
