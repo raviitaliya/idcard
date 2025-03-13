@@ -1,111 +1,107 @@
+import React, { useEffect, useState } from 'react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+
 const App = () => {
-  const handlePrint = async () => {
-    const canvas1 = document.createElement('canvas');
-    const canvas2 = document.createElement('canvas');
-    const ctx1 = canvas1.getContext('2d');
-    const ctx2 = canvas2.getContext('2d');
+  const [imagesLoaded, setImagesLoaded] = useState(false);
 
-    canvas1.width = 1011;
-    canvas1.height = 637.5;
-    canvas2.width = 1011;
-    canvas2.height = 637.5;
+  useEffect(() => {
+    const images = document.images;
+    let loadedCount = 0;
+    const totalImages = images.length;
 
-    const loadImage = (src) => {
-      return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.src = src;
-      });
+    const onImageLoad = () => {
+      loadedCount += 1;
+      if (loadedCount === totalImages) {
+        setImagesLoaded(true);
+      }
     };
 
-    try {
-      const [bgImage1, rectangle, groupImage, group31, bgImage2, rectangle8, vector, phone, mail, web, mapPin] = await Promise.all([
-        loadImage('/ID-05.svg'),
-        loadImage('/Rectangle.svg'),
-        loadImage('/Group (2).svg'),
-        loadImage('/Group 31.svg'),
-        loadImage('/ID-06.svg'),
-        loadImage('/Rectangle 8.svg'),
-        loadImage('/Vector (1).svg'),
-        loadImage('/Phone.svg'),
-        loadImage('/Mail.svg'),
-        loadImage('/Web.svg'),
-        loadImage('/Map pin.svg')
-      ]);
-
-      ctx1.drawImage(bgImage1, 0, 0, 1011, 637.5);
-      ctx1.drawImage(rectangle, 66, 225);
-      ctx1.drawImage(groupImage, 777.5, 225);
-      ctx1.drawImage(group31, 141, 501);
-
-      ctx1.font = 'bold 24px sans-serif';
-      ctx1.fillStyle = 'black';
-      
-      const leftLabels = ['NAME', 'IQAMA/PASSPORT', 'ISSUED DATE', 'EXPIRY DATE', 'ID NUMBER', 'COMPANY NAME'];
-      const rightValues = ['ZEESHAN TAHASHILDAR', '1234567', '25-DEC-2024', '24-DEC-2025', 'QBIC-ABC12345', 'QUALITY BASE INSPECTION COMPANY'];
-      
-      leftLabels.forEach((label, index) => {
-        ctx1.fillText(label, 245, 200 + (index * 40));
-        ctx1.fillText(': ' + rightValues[index], 400, 200 + (index * 40));
-      });
-
-      // Draw second card
-      ctx2.drawImage(bgImage2, 0, 0, 1011, 637.5);
-      ctx2.drawImage(rectangle8, 0, 186);
-      ctx2.drawImage(vector, 152, 299);
-
-      // Add text for second card
-      ctx2.font = 'bold 31px sans-serif';
-      ctx2.fillText('AUTHORISED SIGNATORY', 75, 252);
-      ctx2.fillText('AUTHORISED COMPANY', 567, 252);
-
-      ctx2.font = 'semibold 25px sans-serif';
-      ctx2.fillText('+966 13363 6833', 575, 310);
-      ctx2.fillText('info@qbic.com.sa', 575, 373);
-      ctx2.fillText('www.qbic.com.sa', 575, 428);
-      ctx2.fillText('Yarmouk Road, Arifi industrial Area, PO BOX 2985,', 575, 483);
-      ctx2.fillText('Al Jubail 35525, Kingdom of Saudi Arabia', 575, 513);
-
-      const printContainer = document.createElement('div');
-      printContainer.style.display = 'none';
-      printContainer.appendChild(canvas1);
-      printContainer.appendChild(document.createElement('div')).style.marginBottom = '1000px';
-      printContainer.appendChild(canvas2);
-      document.body.appendChild(printContainer);
-
-      window.print();
-      document.body.removeChild(printContainer);
-    } catch (error) {
-      console.error('Error loading images:', error);
+    if (totalImages === 0) {
+      setImagesLoaded(true);
+    } else {
+      for (let i = 0; i < totalImages; i++) {
+        if (images[i].complete) {
+          onImageLoad();
+        } else {
+          images[i].addEventListener('load', onImageLoad);
+          images[i].addEventListener('error', onImageLoad);
+        }
+      }
     }
+  }, []);
+
+  const handlePrint = async () => {
+    if (!imagesLoaded) {
+      alert('Images are still loading. Please try again in a moment.');
+      return;
+    }
+
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdfWidth = 190;   
+    const pdfHeight = 120;
+
+    const card1 = document.getElementById('card1');
+    if (card1) {
+      const canvas1 = await html2canvas(card1, {
+        scale: 1,
+        useCORS: true,
+        backgroundColor: '#FFFFFF',
+      });
+      const imgData1 = canvas1.toDataURL('image/png');
+      pdf.addImage(imgData1, 'PNG', 10, 10, pdfWidth, pdfHeight);
+    }
+
+    const card2 = document.getElementById('card2');
+    if (card2) {
+      const canvas2 = await html2canvas(card2, {
+        scale: 1,
+        useCORS: true,
+        backgroundColor: '#FFFFFF', 
+      });
+      const imgData2 = canvas2.toDataURL('image/png');
+      pdf.addPage();
+      pdf.addImage(imgData2, 'PNG', 10, 10, pdfWidth, pdfHeight);
+    }
+
+    pdf.save('document.pdf');
   };
 
   return (
     <div>
       <button
         onClick={handlePrint}
-        className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 print:hidden"
+        className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 print:hidden print-button"
+        disabled={!imagesLoaded}
       >
-        Print Page
+        {imagesLoaded ? 'Print Page' : 'Loading Images...'}
       </button>
 
       <img src="/favicon.svg" alt="" className="" />
 
-      <div className='w-[1011px] h-[637.5px] relative'>
-        <img src="/ID-05.svg" alt="" className='absolute opacity-90' />
+      <div
+        id="card1"
+        className="!w-[1011px] !h-[637.5px] relative bg-[url('/img1.svg')]"
+      >
         <div>
-
           <div>
-            <img src="/Rectangle.svg" alt="" className='absolute top-[225px] left-[66px] z-10' />
-
+            <img
+              src="/Rectangle.svg"
+              alt=""
+              className="absolute top-[225px] left-[66px] z-10 w-auto h-auto"
+            />
             <div className="bg-white w-full">
-              <img src="/Group (2).svg" alt="" className='absolute top-[225px] left-[777.5px] z-20 bg-white p-3' />
+              <img
+                src="/Group (2).svg"
+                alt=""
+                className="absolute top-[225px] left-[777.5px] z-20 bg-white p-3 w-auto h-auto"
+              />
             </div>
           </div>
 
-          <div className='absolute top-[167px] left-[245px] text-[24px] font-sans'>
-            <div className='flex gap-4 z-10'>
-              <div className='font-bold flex flex-col gap-4 '>
+          <div className="absolute top-[167px] left-[245px] text-[24px] font-sans">
+            <div className="flex gap-4 z-10">
+              <div className="font-bold flex flex-col gap-4">
                 <p>NAME</p>
                 <p>IQAMA/PASSPORT</p>
                 <p>ISSUED DATE</p>
@@ -113,84 +109,71 @@ const App = () => {
                 <p>ID NUMBER</p>
                 <p>COMPANY NAME</p>
               </div>
-
-              <div className='font-bold flex flex-col gap-4 '>
-                <p>:   ZEESHAN TAHASHILDAR</p>
-                <p>:   1234567</p>
-                <p>:   25-DEC-2024</p>
-                <p>:   24-DEC-2025</p>
-                <p>:   QBIC-ABC12345</p>
-                <p>:   QUALITY BASE INSPECTION COMPANY</p>
-              </div>
-              <div>
-
+              <div className="font-bold flex flex-col gap-4">
+                <p>: ZEESHAN TAHASHILDAR</p>
+                <p>: 1234567</p>
+                <p>: 25-DEC-2024</p>
+                <p>: 24-DEC-2025</p>
+                <p>: QBIC-ABC12345</p>
+                <p>: QUALITY BASE INSPECTION COMPANY</p>
               </div>
             </div>
           </div>
 
-
           <div>
-            <img src="/Group 31.svg" alt="" className='absolute top-[501px] left-[141px] z-10 ' />
+            <img
+              src="/Group 31.svg"
+              alt=""
+              className="absolute top-[501px] left-[141px] z-10 w-auto h-auto"
+            />
           </div>
-
         </div>
       </div>
 
-
-
-
-      <div className='w-[1011px] h-[637.5px] mt-[1000px] relative'>
-        <img src="/ID-06.svg" alt="" className='absolute opacity-80' />
+      <div
+        id="card2"
+        className="w-[1011px] h-[637.5px] mt-[20px] relative bg-[url('/img2.svg')]"
+      >
         <div>
-          <div className='w-[851.3px] h-[102px] absolute font-sans  top-[60px] left-1/2 transform -translate-x-1/2'>
-            <div className=' w-full h-full  font-semibold text-justify text-[26px] leading-[32.68px] ' >
+          <div className="w-[851.3px] h-[102px] absolute font-sans top-[60px] left-1/2 transform -translate-x-1/2">
+            <div className="w-full h-full font-semibold text-justify text-[26px] leading-[32.68px]">
               "Zeeshan Tahashidar, employed by Quality Base Inspection Company, has successfully completed the Operator Training Course and is now certified to work as a Crane Operator."
             </div>
           </div>
 
-
-
           <div>
-            <img src="/Rectangle 8.svg" alt="" className='absolute top-[186px]' />
-
-            <div className='absolute top-[221px] left-[75px] text-[31px] font-bold font-sans' >
-              AUTHORISED SIGNATORY
+            <div className="absolute top-[206px] left-[75px] text-[31px] font-bold font-sans">
+              AUTHORIZED SIGNATORY
             </div>
-
-            <img src="/Vector (1).svg" alt="" className='absolute top-[299px] left-[152px]' />
-            <div className='absolute top-[221px] left-[567px] text-[31px] font-bold font-sans' >
-              AUTHORISED COMPANY
+            <img
+              src="/Vector (1).svg"
+              alt=""
+              className="absolute top-[299px] left-[152px] w-auto h-auto"
+            />
+            <div className="absolute top-[206px] left-[567px] text-[31px] font-bold font-sans">
+              AUTHORIZED COMPANY
             </div>
-            <div className='absolute top-[287px] left-[499px]' />
-            <div className='absolute top-[287px] left-[499px] flex gap-8  text-[25px] font-semibold'>
-              <img src="/Phone.svg" alt="" />
-              <p>+966 13363 6833</p>
+            <div className="absolute top-[287px] left-[499px] gap-5 flex">
+              <div className="flex gap-10 pt-2 flex-col text-[25px] font-semibold">
+                <img src="/Phone.svg" alt="" className="w-auto h-auto" />
+                <img src="/Mail.svg" alt="" className="w-auto h-auto" />
+                <img src="/Web.svg" alt="" className="w-auto h-auto" />
+                <img src="/Map pin.svg" alt="" className="w-auto h-auto" />
+              </div>
+              <div className="flex gap-8 flex-col text-[25px] font-semibold">
+                <p>+966 13363 6833</p>
+                <p>info@qbic.com.sa</p>
+                <p>www.qbic.com.sa</p>
+                <div className="w-[400px] text-justify text-[25px] font-semibold">
+                  <p>Yarmouk Road, Arifi industrial Area, PO BOX 2985, Al Jubail 35525, Kingdom of Saudi Arabia</p>
+                </div>
+              </div>
             </div>
-
-            <div className='absolute top-[350px] left-[499px] flex gap-8  text-[25px] font-semibold' >
-              <img src="/Mail.svg" alt="" />
-              <p>info@qbic.com.sa</p>
-            </div>
-
-            <div className='absolute top-[405px] left-[499px] flex gap-8  text-[25px] font-semibold' >
-              <img src="/Web.svg" alt="" />
-              <p>www.qbic.com.sa</p>
-            </div>
-
-            <div className='absolute top-[460px] left-[499px] flex gap-8 w-[460px] text-justify  text-[25px] font-semibold' >
-              <img src="/Map pin.svg" alt="" />
-              <p>Yarmouk Road, Arifi industrial Area, PO BOX 2985, Al Jubail 35525, Kingdom of Saudi Arabia</p>
-            </div>
-
-
-
           </div>
-
-
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default App
+export default App;
