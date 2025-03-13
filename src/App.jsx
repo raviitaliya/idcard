@@ -257,7 +257,7 @@ const App = () => {
           </div>
 
           <div>
-            <div className={`absolute ${isPrinting || isDownloading ? 'top-[207px]' : 'top-[218px]'} left-[75px] flex gap-28 text-[31px] font-bold font-sans`}>
+            <div className={`absolute ${isPrinting || isDownloading ? 'top-[207px]' : 'top-[220px]'} left-[75px] flex gap-28 text-[31px] font-bold font-sans`}>
               AUTHORIZED SIGNATORY
               <div>
                 AUTHORIZED COMPANY
